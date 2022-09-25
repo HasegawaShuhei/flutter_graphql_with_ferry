@@ -10,7 +10,7 @@ final graphqlClientProvider =
 Future<ferry.Client> initClient() async {
   await Hive.initFlutter();
 
-  final box = await Hive.openBox<ferry.Cache>('graphql');
+  final box = await Hive.openBox<dynamic>('graphql');
 
   final store = HiveStore(box);
 
