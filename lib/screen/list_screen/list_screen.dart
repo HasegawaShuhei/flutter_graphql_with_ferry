@@ -39,8 +39,8 @@ class _PokemonListScreenBody extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allPokemon = ref.watch(pokemonsProvider);
-    return allPokemon.when(
+    final pokemons = ref.watch(pokemonsProvider);
+    return pokemons.when(
       data: (data) {
         return SliverPadding(
           padding: const EdgeInsets.all(8),
