@@ -102,6 +102,13 @@ class _$GAllPokemonData_pokemonsSerializer
             specifiedType: const FullType(BuiltList,
                 const [const FullType(GAllPokemonData_pokemons_results)])));
     }
+    value = object.next;
+    if (value != null) {
+      result
+        ..add('next')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(String)));
+    }
     return result;
   }
 
@@ -126,6 +133,10 @@ class _$GAllPokemonData_pokemonsSerializer
               specifiedType: const FullType(BuiltList, const [
                 const FullType(GAllPokemonData_pokemons_results)
               ]))! as BuiltList<Object?>);
+          break;
+        case 'next':
+          result.next = serializers.deserialize(value,
+              specifiedType: const FullType(String)) as String?;
           break;
       }
     }
@@ -456,12 +467,15 @@ class _$GAllPokemonData_pokemons extends GAllPokemonData_pokemons {
   final String G__typename;
   @override
   final BuiltList<GAllPokemonData_pokemons_results>? results;
+  @override
+  final String? next;
 
   factory _$GAllPokemonData_pokemons(
           [void Function(GAllPokemonData_pokemonsBuilder)? updates]) =>
       (new GAllPokemonData_pokemonsBuilder()..update(updates))._build();
 
-  _$GAllPokemonData_pokemons._({required this.G__typename, this.results})
+  _$GAllPokemonData_pokemons._(
+      {required this.G__typename, this.results, this.next})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(
         G__typename, r'GAllPokemonData_pokemons', 'G__typename');
@@ -481,19 +495,22 @@ class _$GAllPokemonData_pokemons extends GAllPokemonData_pokemons {
     if (identical(other, this)) return true;
     return other is GAllPokemonData_pokemons &&
         G__typename == other.G__typename &&
-        results == other.results;
+        results == other.results &&
+        next == other.next;
   }
 
   @override
   int get hashCode {
-    return $jf($jc($jc(0, G__typename.hashCode), results.hashCode));
+    return $jf($jc(
+        $jc($jc(0, G__typename.hashCode), results.hashCode), next.hashCode));
   }
 
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'GAllPokemonData_pokemons')
           ..add('G__typename', G__typename)
-          ..add('results', results))
+          ..add('results', results)
+          ..add('next', next))
         .toString();
   }
 }
@@ -513,6 +530,10 @@ class GAllPokemonData_pokemonsBuilder
   set results(ListBuilder<GAllPokemonData_pokemons_results>? results) =>
       _$this._results = results;
 
+  String? _next;
+  String? get next => _$this._next;
+  set next(String? next) => _$this._next = next;
+
   GAllPokemonData_pokemonsBuilder() {
     GAllPokemonData_pokemons._initializeBuilder(this);
   }
@@ -522,6 +543,7 @@ class GAllPokemonData_pokemonsBuilder
     if ($v != null) {
       _G__typename = $v.G__typename;
       _results = $v.results?.toBuilder();
+      _next = $v.next;
       _$v = null;
     }
     return this;
@@ -548,7 +570,8 @@ class GAllPokemonData_pokemonsBuilder
           new _$GAllPokemonData_pokemons._(
               G__typename: BuiltValueNullFieldError.checkNotNull(
                   G__typename, r'GAllPokemonData_pokemons', 'G__typename'),
-              results: _results?.build());
+              results: _results?.build(),
+              next: next);
     } catch (_) {
       late String _$failedField;
       try {

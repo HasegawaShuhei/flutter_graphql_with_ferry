@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 
 import '../../graphql/__generated__/all_pokemon.data.gql.dart';
 import '../../router/app_router.dart';
@@ -8,29 +9,24 @@ import 'pokemons_provider.dart';
 
 /// streamProviderを使うパターン
 
-class PokemonListScreen extends StatelessWidget {
+class PokemonListScreen extends HookConsumerWidget {
   const PokemonListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ポケモン一覧'),
+      ),
+      body: const SafeArea(
         top: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: Text('ポケモン一覧'),
-              floating: true,
-            ),
-            _PokemonListScreenBody(),
-          ],
-        ),
+        child: _PokemonListScreenBody(),
       ),
     );
   }
 }
 
-final _pokemonProvider = Provider<GAllPokemonData_pokemons_results>(
+final _currentPokemonProvider = Provider<GAllPokemonData_pokemons_results>(
   (ref) => throw UnimplementedError(),
 );
 
@@ -39,35 +35,39 @@ class _PokemonListScreenBody extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pokemons = ref.watch(pokemonsProvider);
-    return pokemons.when(
-      data: (data) {
-        return SliverPadding(
-          padding: const EdgeInsets.all(8),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => ProviderScope(
+    final pokemonList = ref.watch(pagenatedPokemonsProvider(0));
+    return pokemonList.when(
+      data: (pokemons) {
+        final results = pokemons.results;
+        return LazyLoadScrollView(
+          onEndOfPage: () {
+            if (pokemons.hasNext) {
+              ref.refresh(pagenatedPokemonsProvider(results.length));
+            }
+          },
+          child: RefreshIndicator(
+            onRefresh: () async =>
+                ref.refresh(pagenatedPokemonsProvider(0).future),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: results.length,
+              itemBuilder: (context, index) => ProviderScope(
                 overrides: [
-                  _pokemonProvider.overrideWithValue(data[index]),
+                  _currentPokemonProvider.overrideWithValue(results[index]),
                 ],
                 child: const _PokemonListTile(),
               ),
-              childCount: data!.length,
             ),
           ),
         );
       },
-      error: (e, st) => SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: Text(e.toString()),
+      error: (e, st) => Center(
+        child: Text(
+          e.toString(),
         ),
       ),
-      loading: () => const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }
@@ -78,7 +78,7 @@ class _PokemonListTile extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pokemon = ref.watch(_pokemonProvider);
+    final pokemon = ref.watch(_currentPokemonProvider);
     return GestureDetector(
       onTap: () => context.goNamed(
         AppRoute.detail.name,
