@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 
 import '../../graphql/__generated__/all_pokemon.data.gql.dart';
 import '../../router/app_router.dart';
@@ -39,35 +38,34 @@ class _PokemonListScreenBody extends HookConsumerWidget {
     return pokemonList.when(
       data: (pokemons) {
         final results = pokemons.results;
-        return LazyLoadScrollView(
-          onEndOfPage: () {
-            if (pokemons.hasNext) {
-              ref.refresh(pagenatedPokemonsProvider(results.length));
-            }
-          },
-          child: RefreshIndicator(
-            onRefresh: () async =>
-                ref.refresh(pagenatedPokemonsProvider(0).future),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: results.length,
-              itemBuilder: (context, index) => ProviderScope(
-                overrides: [
-                  _currentPokemonProvider.overrideWithValue(results[index]),
-                ],
-                child: const _PokemonListTile(),
-              ),
+        return RefreshIndicator(
+          onRefresh: () async =>
+              ref.refresh(pagenatedPokemonsProvider(0).future),
+          child: ListView.custom(
+            padding: const EdgeInsets.all(8),
+            childrenDelegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (results.length - 1 == index && pokemons.hasNext) {
+                  ref.refresh(pagenatedPokemonsProvider(results.length));
+                  return const _LoadingWidget();
+                }
+                return ProviderScope(
+                  overrides: [
+                    _currentPokemonProvider.overrideWithValue(results[index]),
+                  ],
+                  child: const _PokemonListTile(),
+                );
+              },
+              childCount: results.length,
             ),
           ),
         );
       },
+      loading: () => const _LoadingWidget(),
       error: (e, st) => Center(
         child: Text(
           e.toString(),
         ),
-      ),
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
       ),
     );
   }
@@ -112,6 +110,17 @@ class _PokemonListTile extends HookConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LoadingWidget extends StatelessWidget {
+  const _LoadingWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 }

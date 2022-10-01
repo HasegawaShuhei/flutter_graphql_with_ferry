@@ -12,6 +12,8 @@ Future<ferry.Client> initClient() async {
 
   final box = await Hive.openBox<dynamic>('graphql');
 
+  // await box.clear();
+
   final store = HiveStore(box);
 
   final cache = ferry.Cache(store: store);
